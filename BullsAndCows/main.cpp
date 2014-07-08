@@ -8,7 +8,15 @@
 
 const static SDL_Color fontColor = { 0, 0, 0 };
 const static int secret_number_digits = 4;
+
+//Spacing between bulls/cows images
 #define IMG_SPACING_PIXELS 10
+#define IMG_SIZE 64
+#define DIGIT_SPACING_PIXELS 40
+//Yeah I'm aware I can do it with viewport. I prefer this way
+#define GLOBAL_X_OFFSET 40
+
+
 #define RAND_RANGE(min, max) ((min) + rand() % ((max) - (min)))
 
 void sdl_error_log(char* err) {
@@ -133,26 +141,66 @@ void GenerateSecretNumber(char* num) {
 		}
 	}while(!HasDifferentDigits(num));
 }
+
+
+bool Init(SDL_Window** win, SDL_Renderer** ren) {
+	*win = 0; *ren = 0;
+
+	if( SDL_Init(SDL_INIT_EVERYTHING) != 0 ) {
+		sdl_error_log("init sdl");
+		return false;
+	}
+	*win = SDL_CreateWindow("Bulls and cows", 100, 100, 640, 580, SDL_WINDOW_SHOWN);
+	if( !win ) {
+		sdl_error_log("open window");
+		return false;
+	}
+	*ren = SDL_CreateRenderer(*win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	if( !ren ) {
+		sdl_error_log("create renderer");
+		return false;
+	}
+	if(TTF_Init() == -1) {
+		sdl_error_log("init TTF");
+	}
+	return true;
+}
+
+
+Texture RenderText(SDL_Renderer* ren, char* text, TTF_Font* font) {
+	SDL_Surface* surf = TTF_RenderText_Solid(font, text, fontColor);
+	if(!surf) {
+		return Texture();
+	}
+	SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+	if(!tex) {
+		SDL_FreeSurface(surf);
+		return Texture();
+	}
+	Texture d; d.ptr = tex; d.width = surf->w; d.height = surf->h;
+	return d;
+}
+
+#define CLEANUP_AND_EXIT(cond) if(cond) { \
+	res.Cleanup(); \
+	SDL_DestroyRenderer(ren); \
+	SDL_DestroyWindow(win); \
+	SDL_Quit(); }
+
 int main(int argc, char* argv[]) {
 	//------------Init SDL---------------------------
 	//-----------------------------------------------
-	if( SDL_Init(SDL_INIT_EVERYTHING) != 0 ) {
-		sdl_error_exit("init sdl");
-	}
-	SDL_Window* win = SDL_CreateWindow("Bulls and cows", 100, 100, 640, 580, SDL_WINDOW_SHOWN);
-	if( !win ) {
-		sdl_error_exit("open window");
-	}
-	SDL_Renderer* ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if( !ren ) {
-		SDL_DestroyWindow(win);
-		sdl_error_exit("renderer");
-	}
-
-	if(TTF_Init() == -1) {
-		SDL_DestroyRenderer(ren);
-		SDL_DestroyWindow(win);
-		std_error_exit("init TTF.");
+	SDL_Window* win;
+	SDL_Renderer* ren;
+	
+	if(!Init(&win, &ren)) {
+		if(ren) {
+			SDL_DestroyRenderer(ren);
+		}
+		if(win) {
+			SDL_DestroyWindow(win);
+		}
+		return -1;
 	}
 
 
@@ -165,32 +213,15 @@ int main(int argc, char* argv[]) {
 	TTF_Font* font72 = TTF_OpenFont("asta.ttf", 72);
 	TTF_Font* font28 = TTF_OpenFont("asta.ttf", 28);
 
-	if(res.HasFailed() || !font72 || !font28) {
-		SDL_DestroyRenderer(ren);
-		SDL_DestroyWindow(win);
-		std_error_exit("load some resources. Shutting down.");
-	}
+	CLEANUP_AND_EXIT(res.HasFailed() || !font72 || !font28);
 
 	Texture digit_textures[10];
 	for(int i = 0; i < 10; ++i) {
 		char digit_buffer[2];
 		_itoa_s(i, digit_buffer, 10);
-		SDL_Surface* digit_surface = TTF_RenderText_Solid(font72, digit_buffer, fontColor);
-		if(!digit_surface) {
-			SDL_DestroyRenderer(ren);
-			SDL_DestroyWindow(win);
-			std_error_exit("draw a number.");
-		}
-		SDL_Texture* digit_tex = SDL_CreateTextureFromSurface(ren, digit_surface);
-		if(!digit_tex) {
-			SDL_DestroyRenderer(ren);
-			SDL_DestroyWindow(win);
-			std_error_exit("make a tex of a number.");
-		}
-		Texture d; d.ptr = digit_tex; d.width = digit_surface->w;
-		d.height = digit_surface->h;
-		SDL_FreeSurface(digit_surface);
-		
+		Texture d = RenderText(ren, digit_buffer, font72);
+		CLEANUP_AND_EXIT(!d.ptr);
+
 		digit_textures[i] = d;
 		//this will release the texture at the end of program
 		res.addTexture(digit_buffer, d);
@@ -198,25 +229,12 @@ int main(int argc, char* argv[]) {
 
 	//Initialize the description text
 	{
-		SDL_Surface* text = TTF_RenderText_Solid(font28, "Use arrows to change numbers and \"C\" to check your answer.", fontColor);
-		if(!text) {
-			SDL_DestroyRenderer(ren);
-			SDL_DestroyWindow(win);
-			std_error_exit("draw a number.");
-		}
-		SDL_Texture* text_t = SDL_CreateTextureFromSurface(ren, text);
-		if(!text_t) {
-			SDL_DestroyRenderer(ren);
-			SDL_DestroyWindow(win);
-			std_error_exit("make a tex of a number.");
-		}
-		Texture d; d.ptr = text_t; d.width = text->w; d.height = text->h;
-		SDL_FreeSurface(text);
-		
-		res.addTexture("InfoText", d);
-		//Set a var from the outer scope
-		hint = d;
+		char* desc_text = "Use arrows to change the numbers and \"C\" to check your answer.";
+		hint = RenderText(ren, desc_text, font28);
+		CLEANUP_AND_EXIT(!hint.ptr);
+		res.addTexture("InfoText", hint);
 	}
+
 	TTF_CloseFont(font72);
 	TTF_CloseFont(font28);
 
@@ -262,22 +280,30 @@ int main(int argc, char* argv[]) {
 		}
 		
 
-		//Render the scene
-		SDL_Rect rect; int size = 64;
+		//--------------RENDERING-------------
+		SDL_Rect rect;
 		SDL_SetRenderDrawColor( ren, 0xFF, 0xFF, 0xFF, 0xFF );
 		SDL_RenderClear(ren);
-		RenderImageRow(ren, bull.ptr, bull_count, 64, 40, 200);
-		RenderImageRow(ren, cow.ptr, cow_count, 64, 40, 300);
 
-		rect.x = 40 + secret_number_digits * (size + IMG_SPACING_PIXELS) + 50 * selected;
+		//Render the images(bulls + cows)
+		RenderImageRow(ren, bull.ptr, bull_count, IMG_SIZE, GLOBAL_X_OFFSET, 200);
+		RenderImageRow(ren, cow.ptr, cow_count, IMG_SIZE, GLOBAL_X_OFFSET, 300);
+
+
+		int digit_position_offset = GLOBAL_X_OFFSET + secret_number_digits * (IMG_SIZE + IMG_SPACING_PIXELS);
+
+		//Render the red background behind the selected digit
+		rect.x = digit_position_offset + DIGIT_SPACING_PIXELS * selected;
 		rect.y = 250;
-		rect.w = digit_textures[0].width;
-		rect.h = digit_textures[0].height;
+		rect.w = digit_textures[guess_number[selected]].width;
+		rect.h = digit_textures[guess_number[selected]].height;
 		SDL_SetRenderDrawColor( ren, 0xFF, 0x00, 0x00, 0xFF );
 		SDL_RenderFillRect( ren, &rect );
+
+		//Render the digits
 		for(int i = 0; i < secret_number_digits; ++i) {
 			int digit = guess_number[i];
-			rect.x = 40 + secret_number_digits * (size + IMG_SPACING_PIXELS) + 50 * i;
+			rect.x = digit_position_offset + DIGIT_SPACING_PIXELS * i;
 			rect.y = 250;
 			rect.w = digit_textures[digit].width;
 			rect.h = digit_textures[digit].height;
@@ -294,12 +320,6 @@ int main(int argc, char* argv[]) {
 	}
 
 
-	//------------Cleanup---------------
-	//----------------------------------
-	res.Cleanup();
-	SDL_DestroyRenderer(ren);
-	SDL_DestroyWindow(win);
-	SDL_Quit();
-
+	CLEANUP_AND_EXIT(true);
 	return 0;
 }
