@@ -102,6 +102,37 @@ void RenderImageRow(SDL_Renderer* ren, SDL_Texture* tex, int count, int size, in
 }
 
 
+bool HasDifferentDigits(char* num) {
+	for(int i = 0; i < secret_number_digits; ++i) {
+		for(int j = i + 1; j < secret_number_digits; ++j) {
+			if(num[i] == num[j])
+				return false;
+		}
+	}
+	return true;
+}
+void UpdateBullsAndCows(char* guess_number, char* secret_number, int* bulls, int* cows) {
+	if(!HasDifferentDigits(guess_number)) {
+		*bulls = 4; *cows = 4;
+		return;
+	}
+	*bulls = 0; *cows = 0;
+	for(int i = 0; i < secret_number_digits; ++i) {
+		for(int j = 0; j < secret_number_digits; ++j) {
+			if(guess_number[i] == secret_number[j]) {
+				if(i == j) ++*bulls;
+				else ++*cows;
+			}
+		}
+	}
+}
+void GenerateSecretNumber(char* num) {
+	do{
+		for(int i = 0; i < secret_number_digits; ++i) {
+			num[i] = rand() % 10;
+		}
+	}while(!HasDifferentDigits(num));
+}
 int main(int argc, char* argv[]) {
 	//------------Init SDL---------------------------
 	//-----------------------------------------------
@@ -175,8 +206,9 @@ int main(int argc, char* argv[]) {
 	char secret_number[secret_number_digits];
 	char guess_number[secret_number_digits];
 
+	//Fill in the numbers from above
+	GenerateSecretNumber(secret_number);
 	for(int i = 0; i < secret_number_digits; ++i) {
-		secret_number[i] = rand() % 10;
 		guess_number[i] = i+1;
 	}
 
@@ -188,8 +220,20 @@ int main(int argc, char* argv[]) {
 		while(SDL_PollEvent(&e)) {
 			if(e.type == SDL_QUIT) 
 				done = true;
-			if(e.type == SDL_KEYDOWN)
-				done = true;
+			if(e.type == SDL_KEYDOWN) {
+				switch( e.key.keysym.sym ) {
+				case SDLK_UP:
+					guess_number[selected] = std::min(guess_number[selected] + 1, 9); break;
+				case SDLK_DOWN:
+					guess_number[selected] = std::max(guess_number[selected] - 1, 0); break;
+				case SDLK_LEFT:
+					selected = std::max(selected - 1, 0); break;
+				case SDLK_RIGHT:
+					selected = std::min(selected + 1, secret_number_digits-1); break;
+				case SDLK_c:
+					UpdateBullsAndCows(guess_number, secret_number, &bull_count, &cow_count);
+				}
+			}
 			if(e.type == SDL_MOUSEBUTTONDOWN)
 				done = true;
 		}
