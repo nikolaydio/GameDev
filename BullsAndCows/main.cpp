@@ -161,21 +161,21 @@ int main(int argc, char* argv[]) {
 	ResourceManager res(ren);
 	Texture bull = res.getTexture("bull.bmp");
 	Texture cow = res.getTexture("cow.bmp");
-	
-	TTF_Font* font = TTF_OpenFont("asta.ttf", 72);
-	
+	Texture hint;
+	TTF_Font* font72 = TTF_OpenFont("asta.ttf", 72);
+	TTF_Font* font28 = TTF_OpenFont("asta.ttf", 28);
 
-	if(res.HasFailed() || !font) {
+	if(res.HasFailed() || !font72 || !font28) {
 		SDL_DestroyRenderer(ren);
 		SDL_DestroyWindow(win);
 		std_error_exit("load some resources. Shutting down.");
 	}
 
 	Texture digit_textures[10];
-	char digit_buffer[2];
 	for(int i = 0; i < 10; ++i) {
+		char digit_buffer[2];
 		_itoa_s(i, digit_buffer, 10);
-		SDL_Surface* digit_surface = TTF_RenderText_Solid(font, digit_buffer, fontColor);
+		SDL_Surface* digit_surface = TTF_RenderText_Solid(font72, digit_buffer, fontColor);
 		if(!digit_surface) {
 			SDL_DestroyRenderer(ren);
 			SDL_DestroyWindow(win);
@@ -195,7 +195,30 @@ int main(int argc, char* argv[]) {
 		//this will release the texture at the end of program
 		res.addTexture(digit_buffer, d);
 	}
-	
+
+	//Initialize the description text
+	{
+		SDL_Surface* text = TTF_RenderText_Solid(font28, "Use arrows to change numbers and \"C\" to check your answer.", fontColor);
+		if(!text) {
+			SDL_DestroyRenderer(ren);
+			SDL_DestroyWindow(win);
+			std_error_exit("draw a number.");
+		}
+		SDL_Texture* text_t = SDL_CreateTextureFromSurface(ren, text);
+		if(!text_t) {
+			SDL_DestroyRenderer(ren);
+			SDL_DestroyWindow(win);
+			std_error_exit("make a tex of a number.");
+		}
+		Texture d; d.ptr = text_t; d.width = text->w; d.height = text->h;
+		SDL_FreeSurface(text);
+		
+		res.addTexture("InfoText", d);
+		//Set a var from the outer scope
+		hint = d;
+	}
+	TTF_CloseFont(font72);
+	TTF_CloseFont(font28);
 
 	//------------Main Loop-------------------------
 	//----------------------------------------------
@@ -260,6 +283,13 @@ int main(int argc, char* argv[]) {
 			rect.h = digit_textures[digit].height;
 			SDL_RenderCopy(ren, digit_textures[digit].ptr, 0, &rect);
 		}
+
+		//Draw description text
+		rect.x = 40;
+		rect.y = 400;
+		rect.w = hint.width;
+		rect.h = hint.height;
+		SDL_RenderCopy(ren, hint.ptr, 0, &rect);
 		SDL_RenderPresent(ren);
 	}
 
