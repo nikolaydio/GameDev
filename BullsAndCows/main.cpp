@@ -1,6 +1,7 @@
 #include <iostream>
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <time.h>
 
 #include <unordered_map>
 #include <string>
@@ -121,7 +122,7 @@ bool HasDifferentDigits(char* num) {
 }
 void UpdateBullsAndCows(char* guess_number, char* secret_number, int* bulls, int* cows) {
 	if(!HasDifferentDigits(guess_number)) {
-		*bulls = 4; *cows = 4;
+		*bulls = secret_number_digits; *cows = secret_number_digits;
 		return;
 	}
 	*bulls = 0; *cows = 0;
@@ -188,6 +189,7 @@ Texture RenderText(SDL_Renderer* ren, char* text, TTF_Font* font) {
 	SDL_Quit(); }
 
 int main(int argc, char* argv[]) {
+	srand (time(NULL));
 	//------------Init SDL---------------------------
 	//-----------------------------------------------
 	SDL_Window* win;
@@ -275,8 +277,6 @@ int main(int argc, char* argv[]) {
 					UpdateBullsAndCows(guess_number, secret_number, &bull_count, &cow_count);
 				}
 			}
-			if(e.type == SDL_MOUSEBUTTONDOWN)
-				done = true;
 		}
 		
 
