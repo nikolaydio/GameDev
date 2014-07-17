@@ -11,16 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0DB69B98-DF54-4080-A966-FE13E1E48F2B}</ProjectGuid>
+    <ProjectGuid>{654E3175-4CB8-40DC-AA1B-A6523D3FF5BE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>BullsAndCows</RootNamespace>
+    <RootNamespace>SpaceInvaders</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -41,12 +41,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)\BullsAndCowsBuild</OutDir>
+    <OutDir>$(SolutionDir)\SpaceInvadersBuild\</OutDir>
     <IntDir>$(SolutionDir)\Temp\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)\BullsAndCowsBuild</OutDir>
+    <OutDir>$(SolutionDir)\SpaceInvadersBuild\</OutDir>
     <IntDir>$(SolutionDir)\Temp\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -58,7 +58,6 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)\3rdParty\SDL2-2.0.3\include;$(SolutionDir)\3rdParty\SDL2_ttf-2.0.12\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -89,7 +88,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="SpaceInvaders.cpp" />
+    <ClCompile Include="SDLGraphics.cpp" />
+    <ClCompile Include="TextGraphics.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Graphics.h" />
+    <ClInclude Include="Invaders.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
