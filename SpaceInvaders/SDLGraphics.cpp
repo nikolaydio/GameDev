@@ -9,7 +9,6 @@ public:
 };
 class SDL_Graphics : public IGraphics {
 	std::vector<Texture> textures;
-	event_callback callback;
 	int last_time;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
@@ -21,22 +20,40 @@ public:
 		window = SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_UNDEFINED,
 			SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
 		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-		SDL_SetRenderDrawColor( renderer, 0xFF, 0xFF, 0xFF, 0xFF );
+		SDL_SetRenderDrawColor( renderer, 0x00, 0x0, 0x00, 0xFF );
 		last_time = SDL_GetTicks();
 	}
 	void Clear() {
 		SDL_RenderClear(renderer);
 	}
 
-	void HandleEvents() {
+	bool HandleEvent(GrEvent* ev) {
 		SDL_Event e;
-		while( SDL_PollEvent( &e ) != 0 )
-		{ //User requests quit
-
+		if( SDL_PollEvent( &e ) != 0 )
+		{ 
+			if(e.type == SDL_QUIT) {
+				ev->type = ET_EXIT;
+				return true;
+			}else {
+				if(e.type == SDL_KEYDOWN) {
+					ev->type = ET_KEY_DOWN;
+				}else if(e.type == SDL_KEYUP) {
+					ev->type = ET_KEY_UP;
+				}
+				switch(e.key.keysym.sym) {
+				case SDLK_UP:
+					ev->data = EK_UP; break;
+				case SDLK_DOWN:
+					ev->data = EK_DOWN; break;
+				case SDLK_LEFT:
+					ev->data = EK_LEFT; break;
+				case SDLK_RIGHT:
+					ev->data = EK_RIGHT; break;
+				}
+				return true;
+			}
 		}
-	}
-	void SetCallback(event_callback clb) {
-		callback = clb;
+		return false;
 	}
 
 
@@ -44,7 +61,7 @@ public:
 	void RenderTexture(int tex, Vector2d pos)  {
 		SDL_Rect rect;
 		rect.x = pos.x;
-		rect.y = pos.y;
+		rect.y = 480 - pos.y;
 		rect.w = textures[tex].w;
 		rect.h = textures[tex].h;
 		SDL_RenderCopy(renderer, textures[tex].ptr, 0, &rect);

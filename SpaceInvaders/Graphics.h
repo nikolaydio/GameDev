@@ -16,14 +16,22 @@ enum EVENT_TYPE {
 	ET_KEY_DOWN,
 	ET_KEY_UP
 };
-typedef void (*event_callback)(EVENT_TYPE, int);
+enum EVENT_KEY {
+	EK_UP,
+	EK_DOWN,
+	EK_LEFT,
+	EK_RIGHT
+};
+struct GrEvent {
+	EVENT_TYPE type;
+	int data;
+};
 
 class IGraphics {
 public:
 	virtual void Clear() = 0;
 
-	virtual void HandleEvents() = 0;
-	virtual void SetCallback(event_callback clb) = 0;
+	virtual bool HandleEvent(GrEvent* ev) = 0;
 
 	virtual void RenderTexture(int tex, Vector2d pos) = 0;
 	virtual int LoadTexture(char* filename) = 0;

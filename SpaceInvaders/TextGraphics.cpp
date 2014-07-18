@@ -12,7 +12,6 @@
 #define T_MAX_COORD_Y 480
 class Text_Graphics : public IGraphics {
 	std::vector<char> textures;
-	event_callback callback;
 public:
 	bool outside(int min, int max, int val) {
 		if(val < min) return true;
@@ -26,12 +25,10 @@ public:
 		}
 	}
 
-	void HandleEvents() {
-		
+	bool HandleEvent(GrEvent* ev) {
+		return false;
 	}
-	void SetCallback(event_callback clb) {
-		callback = clb;
-	}
+
 
 
 
