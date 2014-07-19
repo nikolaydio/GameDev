@@ -49,6 +49,8 @@ public:
 					ev->data = EK_LEFT; break;
 				case SDLK_RIGHT:
 					ev->data = EK_RIGHT; break;
+				default:
+					return false;
 				}
 				return true;
 			}

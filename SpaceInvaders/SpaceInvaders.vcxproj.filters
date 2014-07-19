@@ -29,10 +29,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Invaders.h">
+    <ClInclude Include="Graphics.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics.h">
+    <ClInclude Include="SpaceInvaders.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
