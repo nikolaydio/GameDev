@@ -29,7 +29,12 @@ public:
 		return false;
 	}
 
-
+	int LoadSound(char* filename) {
+		return -1;
+	}
+	void Text_Graphics::PlaySoundFile(int sound) {
+		
+	}
 
 
 	void RenderTexture(int tex, Vector2d pos)  {

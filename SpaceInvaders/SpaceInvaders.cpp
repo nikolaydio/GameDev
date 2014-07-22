@@ -111,9 +111,11 @@ void SpaceInvaders::LoadResources(IGraphics& graphics) {
 	player_texture = graphics.LoadTexture("ship.bmp");
 	projectile_texture = graphics.LoadTexture("projectile.bmp");
 	invader_texture = graphics.LoadTexture("invader.bmp");
+	player_bullet_sound = graphics.LoadSound("PlayerBullet.wav");
 }
 void SpaceInvaders::Reset() {
 	invaders.Init(invader_texture, 65, 65, 64);
+	projectiles.clear();
 	player_position = Vector2d(50, 50);
 	player_size = Vector2d(104, 64);
 	projectile_speed = 0.75;
@@ -173,7 +175,7 @@ void SpaceInvaders::Render(IGraphics& graphics) {
 void SpaceInvaders::MovePlayer(int dir) {
 	player_velocity.x = dir;
 }
-void SpaceInvaders::Fire() {
+void SpaceInvaders::Fire(IGraphics& gr) {
 	if(status == GS_VICTORY || status == GS_DEFEAT) {
 		Reset();
 		return;
@@ -182,6 +184,7 @@ void SpaceInvaders::Fire() {
 	p.enemy_projectile = false;
 	p.pos = player_position;
 	projectiles.push_back(p);
+	gr.PlaySoundFile(player_bullet_sound);
 }
 
 
@@ -219,7 +222,7 @@ int main(int argc, char* argv[]) {
 				}else if(ev.data == EK_LEFT) {
 					space_invaders.MovePlayer(-1);
 				}else if(ev.data == EK_UP) {
-					space_invaders.Fire();
+					space_invaders.Fire(*graphics);
 				}
 			} else if(ev.type == ET_KEY_UP) {
 				if(ev.data == EK_RIGHT) {
@@ -236,4 +239,5 @@ int main(int argc, char* argv[]) {
 		space_invaders.Render(*graphics);
 		graphics->Present();
 	}
+	delete graphics;
 }

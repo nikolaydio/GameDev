@@ -65,6 +65,7 @@ class SpaceInvaders {
 	int win_screen;
 	int lose_screen;
 	int invader_texture;
+	int player_bullet_sound;
 public:
 	void LoadResources(IGraphics& graphics);
 	void Reset();
@@ -73,5 +74,5 @@ public:
 	void Update(float delta);
 	void Render(IGraphics& graphics);
 	void MovePlayer(int dir);
-	void Fire();
+	void Fire(IGraphics& gr);
 };

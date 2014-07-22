@@ -29,12 +29,17 @@ struct GrEvent {
 
 class IGraphics {
 public:
+	virtual ~IGraphics() {};
+
 	virtual void Clear() = 0;
 
 	virtual bool HandleEvent(GrEvent* ev) = 0;
 
 	virtual void RenderTexture(int tex, Vector2d pos) = 0;
 	virtual int LoadTexture(char* filename) = 0;
+
+	virtual int LoadSound(char* filename) = 0;
+	virtual void PlaySoundFile(int sound) = 0;
 
 	virtual void Present() = 0;
 

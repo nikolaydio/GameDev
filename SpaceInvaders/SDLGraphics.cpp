@@ -1,6 +1,7 @@
 #include "Graphics.h"
 #include <SDL.h>
 #include <vector>
+#include <SDL_mixer.h>
 
 class Texture {
 public:
@@ -9,12 +10,13 @@ public:
 };
 class SDL_Graphics : public IGraphics {
 	std::vector<Texture> textures;
+	std::vector<Mix_Music*> music;
 	int last_time;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 public:
 	SDL_Graphics() {
-		if(SDL_Init( SDL_INIT_VIDEO ) < 0) {
+		if(SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) < 0) {
 			//printf("Failed to init SDL");
 		}
 		window = SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_UNDEFINED,
@@ -22,6 +24,15 @@ public:
 		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 		SDL_SetRenderDrawColor( renderer, 0x00, 0x0, 0x00, 0xFF );
 		last_time = SDL_GetTicks();
+
+		if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
+		{
+			printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+		}
+	}
+	~SDL_Graphics() {
+		Mix_Quit();
+		SDL_Quit();
 	}
 	void Clear() {
 		SDL_RenderClear(renderer);
@@ -57,7 +68,17 @@ public:
 		}
 		return false;
 	}
-
+	int LoadSound(char* filename) {
+		auto *m = Mix_LoadMUS(filename);
+		if(!m) {
+			return -1;
+		}
+		music.push_back(m);
+		return music.size() - 1;
+	}
+	void PlaySoundFile(int sound) {
+		Mix_PlayMusic(music[sound], 1);
+	}
 
 
 	void RenderTexture(int tex, Vector2d pos)  {
