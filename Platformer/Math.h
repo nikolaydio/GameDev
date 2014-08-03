@@ -13,6 +13,7 @@ struct Vector2d {
 	Vector2d& operator-=(const Vector2d& sec);
 	Vector2d operator*(float delta) const;
 	float dot(Vector2d pos) const;
+	Vector2d operator-() const;
 };
 
 struct Rect {

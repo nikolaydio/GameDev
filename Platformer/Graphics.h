@@ -51,5 +51,5 @@ public:
 	Sprite& GetSpirte(ARRAY_ID id);
 
 	SparseArray<Sprite>& GetSpriteList();
-	void Render(SDL_Renderer* ren);
+	void Render(SDL_Renderer* ren, Vector2d cam);
 };

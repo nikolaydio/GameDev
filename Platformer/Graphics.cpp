@@ -77,14 +77,14 @@ Sprite& SpriteScene::GetSpirte(ARRAY_ID id) {
 SparseArray<Sprite>& SpriteScene::GetSpriteList() {
 	return sprites;
 }
-void SpriteScene::Render(SDL_Renderer* ren) {
+void SpriteScene::Render(SDL_Renderer* ren, Vector2d cam) {
 	Sprite* sprite;
 	ARRAY_ID id;
 	SDL_Rect rect;
 	for(int i = 0; i < sprites.GetElementCount(); ++i) {
 		sprites.get_by_index(i, &id, &sprite);
-		rect.x = sprite->pos.x - sprite->size.x / 2;
-		rect.y = sprite->pos.y - sprite->size.y / 2;
+		rect.x = sprite->pos.x - sprite->size.x / 2 - cam.x;
+		rect.y = sprite->pos.y - sprite->size.y / 2 - cam.y;
 		rect.w = sprite->size.x;
 		rect.h = sprite->size.y;
 		if(sprite->source.x | sprite->source.y | sprite->source.w | sprite->source.h) {

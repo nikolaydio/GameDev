@@ -30,23 +30,45 @@ class Character {
 	STATE state;
 
 	float horizontal;
-	bool want_jump;
 
 public:
 	Actor* actor;
-	Character() { want_jump = false; state = RUNNING; horizontal = 0; }
+	Character() { state = RUNNING; horizontal = 0; }
 	void Move(float move) {
 		horizontal += move;
 	}
 	void Jump() {
-		want_jump = true;
+	if(state == RUNNING) {
+			actor->velo.y -= 600;
+			state = JUMPING;
+		}
+	}
+	void Collided(Vector2d normal) {
+		if(normal.x == 0 || normal.y == 1) {
+			if(state == JUMPING) {
+				state = RUNNING;
+			}
+		}
 	}
 	void Update(float delta) {
 		actor->velo.x += horizontal * delta;
-		if(want_jump && state == RUNNING) {
-			actor->velo.y -= 1000;
-			state = JUMPING;
+		if(state == RUNNING) {
+			if(horizontal == 0) {
+				if(actor->velo.x > 0) {
+					actor->velo.x -= std::min(actor->velo.x, 175 * delta);
+				}else{
+					actor->velo.x += std::min(-actor->velo.x, 175 * delta);
+				}
+			}
+			if(actor->velo.x > 0) {
+				actor->velo.x = std::min<float>(actor->velo.x, 200);
+			}else{
+				actor->velo.x = -std::min<float>(-actor->velo.x, 200);
+			}
 		}
+
+		printf("%f\n", actor->velo.x);
+
 		horizontal = 0;
 	}
 };
@@ -64,6 +86,8 @@ class Game {
 	
 	Actor* p1;
 	Character player;
+	ARRAY_ID player_id;
+	Vector2d cam;
 
 	SpriteScene scene;
 	PhysicsWorld physics;
@@ -131,6 +155,7 @@ public:
 		physics.AddActor(id, actor);
 		p1 = &physics.GetActor(id);
 		player.actor = p1;
+		player_id = id;
 
 		actor.shape.pos = Vector2d(100, 200);
 
@@ -163,10 +188,10 @@ public:
 			const Uint8* state = SDL_GetKeyboardState(0);
 			p1->velo += Vector2d(0, 9.8 * 100) * delta;
 			if(state[SDL_SCANCODE_LEFT]) {
-				player.Move(-35);
+				player.Move(-400);
 			}
 			if(state[SDL_SCANCODE_RIGHT]) {
-				player.Move(35);
+				player.Move(400);
 			}
 			if(state[SDL_SCANCODE_UP]) {
 				player.Jump();
@@ -176,16 +201,28 @@ public:
 			physics.UpdatePositions(delta);
 			physics.CollideAndRespond();
 
+			cam.x = p1->shape.pos.x;
+			cam.y = std::min(p1->shape.pos.y, 100.0f);
+
 			//get info from physics and feed to the scene
 			for(auto i = physics.GetMoves().begin(), end = physics.GetMoves().end();
 				i != end; ++i) {
 					scene.SetPosition(i->id, i->pos);
 			}
 			physics.GetMoves().clear();
+			for(auto i = physics.GetCollisions().begin(), end = physics.GetCollisions().end();
+				i != end; ++i) {
+					if(i->first == player_id) {
+						player.Collided(i->normal);
+					}else if(i->second == player_id) {
+						player.Collided(-i->normal);
+					}
+			}
+			physics.GetCollisions().clear();
 
 
 			SDL_RenderClear(renderer);
-			scene.Render(renderer);
+			scene.Render(renderer, Vector2d(cam.x - 320, cam.y - 240));
 
 			if(frame_count % fps_update == 0) {
 				int diff = SDL_GetTicks() - last_display;

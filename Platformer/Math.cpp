@@ -23,3 +23,6 @@ Vector2d Vector2d::operator*(float delta) const {
 float Vector2d::dot(Vector2d pos) const {
 	return x * pos.x + y * pos.y;
 }
+Vector2d Vector2d::operator-() const {
+	return Vector2d(-x, -y);
+}

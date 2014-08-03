@@ -37,7 +37,6 @@ bool AABBvsAABB(Rect* first, Rect* second, Vector2d* normal_out, float* pene_out
 	return false;
 }
 void ResolveCollision(Actor* first, Actor* second, Vector2d normal, float pene) {
-	printf("COLLISION\n");
 	Vector2d rv = second->velo - first->velo;
 
 	float vel = rv.dot( normal );
@@ -94,6 +93,12 @@ void PhysicsWorld::CollideAndRespond() {
 
 			if(AABBvsAABB(&first->shape, &second->shape, &normal, &pene)) {
 				ResolveCollision(first, second, normal, pene);
+
+				CollisionEvent collision;
+				collision.first = first_id;
+				collision.second = second_id;
+				collision.normal = normal;
+				collision_events.push_back(collision);
 			}
 			
 		}
