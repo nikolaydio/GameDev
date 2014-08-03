@@ -187,13 +187,12 @@ public:
 		SDL_Quit();
 	}
 };
+#define MAX_ENTITES 1024
 int main(int argc, char* argv[]) {
 	SparseArray<int> test;
-	test.SetCapacity(128);
-	test.AllocateID(400);
-	printf("%i\n", test.has(4));
-	printf("%i\n", test.has(40));
-	printf("%i\n", test.has(400));
+	IdAllocator allocator(MAX_ENTITES);
+	test.SetCapacity(MAX_ENTITES);
+	
 
 	Game game;
 	if(game.Init())

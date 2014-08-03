@@ -26,7 +26,10 @@ class SparseArray {
 public:
 	SparseArray() : elements(0), index(0), element_count(0),
 		max_element_capacity(0) { }
-
+	~SparseArray() {
+		delete[] elements;
+		delete[] index;
+	}
 	//**can throw elements out**
 	void SetCapacity(int new_capacity) {
 		if(new_capacity == max_element_capacity) {
@@ -47,8 +50,8 @@ public:
 			new_indices[i].offset = INVALID_ID;
 		}
 
-		delete elements;
-		delete index;
+		delete[] elements;
+		delete[] index;
 
 		elements = new_elements;
 		index = new_indices;
@@ -104,4 +107,52 @@ public:
 		element_count--;
 	}
 
+};
+
+
+
+class IdAllocator {
+	ARRAY_ID capacity;
+	ARRAY_ID* ids;
+	ARRAY_ID first;
+	ARRAY_ID last;
+public:
+	IdAllocator(int new_capacity) {
+		capacity = new_capacity;
+		ids = new ARRAY_ID[capacity];
+		for(int i = 1; i < capacity; ++i) {
+			ids[i-1] = i;
+		}
+		ids[capacity-1] = INVALID_ID;
+		first = 0;
+		last = capacity - 1;
+	}
+	~IdAllocator() {
+		delete [] ids;
+	}
+	ARRAY_ID AllocID() {
+		if(first == INVALID_ID) {
+			return INVALID_ID;
+		}
+		ARRAY_ID newid = first;
+		first = ids[first];
+		ids[newid] = INVALID_ID;
+
+		if(last == INVALID_ID) {
+			last = newid;
+		}
+
+		return newid;
+	}
+	void FreeID(ARRAY_ID id) {
+		if(last == INVALID_ID) {
+			return;
+		}
+		if(first == INVALID_ID) {
+			first = id;
+		}
+		ids[last] = id;
+		ids[id] = INVALID_ID;
+		last = id;
+	}
 };
