@@ -84,7 +84,7 @@ void SpriteScene::Render(SDL_Renderer* ren) {
 	for(int i = 0; i < sprites.GetElementCount(); ++i) {
 		sprites.get_by_index(i, &id, &sprite);
 		rect.x = sprite->pos.x - sprite->size.x / 2;
-		rect.y = sprite->pos.y + sprite->size.y / 2;
+		rect.y = sprite->pos.y - sprite->size.y / 2;
 		rect.w = sprite->size.x;
 		rect.h = sprite->size.y;
 		if(sprite->source.x | sprite->source.y | sprite->source.w | sprite->source.h) {

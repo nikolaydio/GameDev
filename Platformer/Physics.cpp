@@ -37,6 +37,7 @@ bool AABBvsAABB(Rect* first, Rect* second, Vector2d* normal_out, float* pene_out
 	return false;
 }
 void ResolveCollision(Actor* first, Actor* second, Vector2d normal, float pene) {
+	printf("COLLISION\n");
 	Vector2d rv = second->velo - first->velo;
 
 	float vel = rv.dot( normal );
@@ -55,8 +56,7 @@ void ResolveCollision(Actor* first, Actor* second, Vector2d normal, float pene) 
 	second->velo += impulse * second->inv_mass;
 
 	const float percent = 0.4;
-	const float slop = 0.01;
-	Vector2d correction = normal * (std::max( pene - slop, 0.0f ) / (mass_sum) * percent);
+	Vector2d correction = normal * (pene / mass_sum * percent);
 	first->shape.pos -= correction * first->inv_mass;
 	second->shape.pos += correction * second->inv_mass;
 }

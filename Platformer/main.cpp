@@ -22,11 +22,34 @@ class Tiles {
 };
 
 
-void LoadFromFile(ResourceManager& res, World& world, const char* fn) {
-	//Texture tex = res.GetTexture("test.bmp");
-	//world.AddEntity(new Platform(Vector2d(125,225), Vector2d(120, 65), tex));
-}
+class Character {
+	enum STATE {
+		RUNNING,
+		JUMPING
+	};
+	STATE state;
 
+	float horizontal;
+	bool want_jump;
+
+public:
+	Actor* actor;
+	Character() { want_jump = false; state = RUNNING; horizontal = 0; }
+	void Move(float move) {
+		horizontal += move;
+	}
+	void Jump() {
+		want_jump = true;
+	}
+	void Update(float delta) {
+		actor->velo.x += horizontal * delta;
+		if(want_jump && state == RUNNING) {
+			actor->velo.y -= 1000;
+			state = JUMPING;
+		}
+		horizontal = 0;
+	}
+};
 
 
 
@@ -40,6 +63,7 @@ class Game {
 	bool running;
 	
 	Actor* p1;
+	Character player;
 
 	SpriteScene scene;
 	PhysicsWorld physics;
@@ -73,7 +97,7 @@ public:
 		//------Add a platform
 		id = allocator.AllocID();
 		sprite.pos = Vector2d(250, 300);
-		sprite.size = Vector2d(500, 90);
+		sprite.size = Vector2d(500, 100);
 		sprite.source.x = 0;
 		sprite.source.y = 0;
 		sprite.source.w = 0;
@@ -81,7 +105,7 @@ public:
 		scene.AddSprite(id, sprite);
 
 		actor.shape.pos = Vector2d(250, 300);
-		actor.shape.size = Vector2d(500, 90);
+		actor.shape.size = Vector2d(500, 100);
 		actor.inv_mass = 0;
 		actor.restitution = 0.1;
 		physics.AddActor(id, actor);
@@ -91,21 +115,22 @@ public:
 		id = allocator.AllocID();
 		sprite.texture = res_manager.GetTexture("character.png");
 		sprite.pos = Vector2d(150, 150);
-		sprite.size = Vector2d(46 * 2, 55 * 2);
-		//sprite.source.x = 0;
-		//sprite.source.y = 3 * 51;
-		//sprite.source.w = 46;
-		//sprite.source.h = 55;
+		sprite.size = Vector2d(36 * 2, 55 * 2);
+		sprite.source.x = 11;
+		sprite.source.y = 153;
+		sprite.source.w = 36;
+		sprite.source.h = 55;
 		scene.AddSprite(id, sprite);
 
 		actor.shape.pos = Vector2d(150, 150);
-		actor.shape.size = Vector2d(46 * 2, 55 * 2);
+		actor.shape.size = Vector2d(36 * 2, 55 * 2);
 		actor.velo = Vector2d(0, 0);
 		actor.inv_mass = 1 / 3.0;
 		actor.restitution = 0.1;
 
 		physics.AddActor(id, actor);
 		p1 = &physics.GetActor(id);
+		player.actor = p1;
 
 		actor.shape.pos = Vector2d(100, 200);
 
@@ -136,13 +161,17 @@ public:
 
 			}
 			const Uint8* state = SDL_GetKeyboardState(0);
-			p1->velo += Vector2d(0, 9.8) * delta;
+			p1->velo += Vector2d(0, 9.8 * 100) * delta;
 			if(state[SDL_SCANCODE_LEFT]) {
-				p1->velo.x -= 35 * delta;
+				player.Move(-35);
 			}
 			if(state[SDL_SCANCODE_RIGHT]) {
-				p1->velo.x += 35 * delta;
+				player.Move(35);
 			}
+			if(state[SDL_SCANCODE_UP]) {
+				player.Jump();
+			}
+			player.Update(delta);
 
 			physics.UpdatePositions(delta);
 			physics.CollideAndRespond();
