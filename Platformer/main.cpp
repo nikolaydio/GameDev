@@ -24,6 +24,7 @@ class Tiles {
 
 class Character {
 	enum STATE {
+		STAYING,
 		RUNNING,
 		JUMPING
 	};
@@ -31,14 +32,22 @@ class Character {
 
 	float horizontal;
 
+	float anim_progress;
+	float anim_max;
+	float anim_speed;
+	float anim_start;
 public:
 	Actor* actor;
-	Character() { state = RUNNING; horizontal = 0; }
+	Sprite* sprite;
+	Character() { state = STAYING; horizontal = 0;
+		anim_speed = 10; anim_max = 9; anim_progress = 0;
+		anim_start = 1;
+	}
 	void Move(float move) {
 		horizontal += move;
 	}
 	void Jump() {
-	if(state == RUNNING) {
+	if(state == RUNNING || state == STAYING) {
 			actor->velo.y -= 600;
 			state = JUMPING;
 		}
@@ -46,7 +55,7 @@ public:
 	void Collided(Vector2d normal) {
 		if(normal.x == 0 || normal.y == 1) {
 			if(state == JUMPING) {
-				state = RUNNING;
+				state = STAYING;
 			}
 		}
 	}
@@ -61,15 +70,36 @@ public:
 				}
 			}
 			if(actor->velo.x > 0) {
-				actor->velo.x = std::min<float>(actor->velo.x, 200);
+				actor->velo.x = std::min<float>(actor->velo.x, 400);
+				sprite->size.x = abs(sprite->size.x);
 			}else{
-				actor->velo.x = -std::min<float>(-actor->velo.x, 200);
+				actor->velo.x = -std::min<float>(-actor->velo.x, 400);
+				sprite->size.x = -abs(sprite->size.x);
+			}
+
+			anim_speed = abs(actor->velo.x) / 32;
+			if(abs(actor->velo.x) < 1) {
+				state = STAYING;
+				sprite->source.x = 0;
+				anim_progress = 0;
+			}else{
+				//do anim
+				sprite->source.x = (int)anim_progress * 50;
+				anim_progress += delta * anim_speed;
+				if(anim_progress > anim_max) {
+					anim_progress = anim_start + anim_progress - anim_max;
+				}
+			}
+		}else if(state == STAYING) {
+			if(abs(actor->velo.x) > 1) {
+				state = RUNNING;
 			}
 		}
 
-		printf("%f\n", actor->velo.x);
+		printf("%f\n", anim_progress);
 
 		horizontal = 0;
+		
 	}
 };
 
@@ -119,30 +149,32 @@ public:
 		sprite.texture = res_manager.GetTexture("grass_platform.png");
 
 		//------Add a platform
-		id = allocator.AllocID();
-		sprite.pos = Vector2d(250, 300);
-		sprite.size = Vector2d(500, 100);
-		sprite.source.x = 0;
-		sprite.source.y = 0;
-		sprite.source.w = 0;
-		sprite.source.h = 0;
-		scene.AddSprite(id, sprite);
+		for(int i = 0; i < 10; ++i) {
+			id = allocator.AllocID();
+			sprite.pos = Vector2d(250 + 500 * i, 300 - 160 * i);
+			sprite.size = Vector2d(500, 100);
+			sprite.source.x = 0;
+			sprite.source.y = 0;
+			sprite.source.w = 0;
+			sprite.source.h = 0;
+			scene.AddSprite(id, sprite);
 
-		actor.shape.pos = Vector2d(250, 300);
-		actor.shape.size = Vector2d(500, 100);
-		actor.inv_mass = 0;
-		actor.restitution = 0.1;
-		physics.AddActor(id, actor);
+			actor.shape.pos = Vector2d(250 + 500 * i, 300 - 160 * i);
+			actor.shape.size = Vector2d(500, 100);
+			actor.inv_mass = 0;
+			actor.restitution = 0.1;
+			physics.AddActor(id, actor);
+		}
 
 
 		//------Add the player
 		id = allocator.AllocID();
-		sprite.texture = res_manager.GetTexture("character.png");
+		sprite.texture = res_manager.GetTexture("character_map.png");
 		sprite.pos = Vector2d(150, 150);
 		sprite.size = Vector2d(36 * 2, 55 * 2);
-		sprite.source.x = 11;
-		sprite.source.y = 153;
-		sprite.source.w = 36;
+		sprite.source.x = 0;
+		sprite.source.y = 0;
+		sprite.source.w = 50;
 		sprite.source.h = 55;
 		scene.AddSprite(id, sprite);
 
@@ -156,6 +188,7 @@ public:
 		p1 = &physics.GetActor(id);
 		player.actor = p1;
 		player_id = id;
+		player.sprite = &scene.GetSpirte(id);
 
 		actor.shape.pos = Vector2d(100, 200);
 

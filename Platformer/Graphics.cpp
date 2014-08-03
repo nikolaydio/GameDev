@@ -83,14 +83,20 @@ void SpriteScene::Render(SDL_Renderer* ren, Vector2d cam) {
 	SDL_Rect rect;
 	for(int i = 0; i < sprites.GetElementCount(); ++i) {
 		sprites.get_by_index(i, &id, &sprite);
-		rect.x = sprite->pos.x - sprite->size.x / 2 - cam.x;
-		rect.y = sprite->pos.y - sprite->size.y / 2 - cam.y;
-		rect.w = sprite->size.x;
-		rect.h = sprite->size.y;
+		Vector2d abs_size(abs(sprite->size.x), abs(sprite->size.y));
+		rect.x = sprite->pos.x - abs_size.x / 2 - cam.x;
+		rect.y = sprite->pos.y - abs_size.y / 2 - cam.y;
+		rect.w = abs_size.x;
+		rect.h = abs_size.y;
+
+		int flip_mask = SDL_FLIP_NONE;
+		if(sprite->size.x < 0) flip_mask |= SDL_FLIP_HORIZONTAL;
+		if(sprite->size.y < 0) flip_mask |= SDL_FLIP_VERTICAL;
+
 		if(sprite->source.x | sprite->source.y | sprite->source.w | sprite->source.h) {
-			SDL_RenderCopy(ren, sprite->texture.ptr, &sprite->source, &rect);
+			SDL_RenderCopyEx(ren, sprite->texture.ptr, &sprite->source, &rect, 0, 0, (SDL_RendererFlip)flip_mask);
 		}else {
-			SDL_RenderCopy(ren, sprite->texture.ptr, 0, &rect);
+			SDL_RenderCopyEx(ren, sprite->texture.ptr, 0, &rect, 0, 0, (SDL_RendererFlip)flip_mask);
 		}
 	}
 }
