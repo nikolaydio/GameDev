@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BullsAndCows", "BullsAndCow
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpaceInvaders", "SpaceInvaders\SpaceInvaders.vcxproj", "{654E3175-4CB8-40DC-AA1B-A6523D3FF5BE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Platformer", "Platformer\Platformer.vcxproj", "{1D13E24F-55B0-454E-975F-A6E4A36C282A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{654E3175-4CB8-40DC-AA1B-A6523D3FF5BE}.Debug|Win32.Build.0 = Debug|Win32
 		{654E3175-4CB8-40DC-AA1B-A6523D3FF5BE}.Release|Win32.ActiveCfg = Release|Win32
 		{654E3175-4CB8-40DC-AA1B-A6523D3FF5BE}.Release|Win32.Build.0 = Release|Win32
+		{1D13E24F-55B0-454E-975F-A6E4A36C282A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1D13E24F-55B0-454E-975F-A6E4A36C282A}.Debug|Win32.Build.0 = Debug|Win32
+		{1D13E24F-55B0-454E-975F-A6E4A36C282A}.Release|Win32.ActiveCfg = Release|Win32
+		{1D13E24F-55B0-454E-975F-A6E4A36C282A}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
