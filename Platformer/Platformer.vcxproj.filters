@@ -10,6 +10,9 @@
     <Filter Include="Graphics">
       <UniqueIdentifier>{aad17fad-0fc8-4990-bb12-82d1da3fb1ff}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{f78946e2-e914-4d59-b7cc-1df426a4cc64}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="World.cpp">
@@ -19,6 +22,12 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Physics.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Math.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="World.h">
@@ -27,6 +36,14 @@
     <ClInclude Include="Graphics.h">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="SparseArray.h" />
+    <ClInclude Include="Physics.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="SparseArray.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Math.h">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -59,7 +59,9 @@ public:
 		max_element_capacity = new_capacity;
 		element_count = entry_count;
 	}
-
+	void Clear() {
+		element_count = 0;
+	}
 	inline int GetCapacity() {
 		return max_element_capacity;
 	}
@@ -74,7 +76,7 @@ public:
 		return index[id].offset != INVALID_ID;
 	}
 	inline T& lookup(ARRAY_ID id) {
-		return elements[index[id].offset];
+		return elements[index[id].offset].data;
 	}
 	inline void get_by_index(ARRAY_INDEX index, ARRAY_ID *id, T** data) {
 		*id = elements[index].id;
@@ -90,9 +92,10 @@ public:
 		if(has(id)) {
 			return index[id].offset;
 		}
-
 		index[id].offset = element_count;
+		elements[index[id].offset].id = id;
 		element_count++;
+		return index[id].offset;
 	}
 	inline void RemoveID(ARRAY_ID id) {
 		if(!has(id)) {

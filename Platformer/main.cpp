@@ -3,178 +3,167 @@
 #include "Graphics.h"
 #include "World.h"
 #include "SparseArray.h"
+#include "Physics.h"
 
-class Platform : public Entity {
-	Vector2d pos, size;
-	Texture tex;
-public:
-	Platform(const Vector2d _pos, const Vector2d _size, Texture& t) {
-		pos = _pos; size = _size;
-		tex = t;
-		mask = 1;
-	}
-	void Render(SDL_Renderer* renderer) {
-		SDL_Rect rect;
-		rect.x = pos.x - size.x / 2;
-		rect.y = pos.y - size.y / 2;
-		rect.w = size.x;
-		rect.h = size.y;
-		SDL_RenderCopy(renderer, tex.ptr, 0, &rect);
-	}
-	Vector2d VsRect(Vector2d a_pos, Vector2d a_size) {
-		Vector2d n = pos - a_pos;
 
-		float a_extent = a_size.x / 2;
-		float b_extent = size.x / 2;
+#define ENABLE_VSYNC
+#ifdef ENABLE_VSYNC
+#define CUSTOM_PRESENT_VSYNC SDL_RENDERER_PRESENTVSYNC
+#else
+#define CUSTOM_PRESENT_VSYNC 0
+#endif
 
-		float x_overlap = a_extent + b_extent - abs( n.x );
-		if(x_overlap > 0) {
-			a_extent = a_size.y / 2;
-			b_extent = size.y / 2;
+#define MAX_ENTITES 1024
 
-			float y_overlap = a_extent + b_extent - abs( n.y );
-			if(y_overlap > 0) {
-				return Vector2d(x_overlap, y_overlap);
-			}
-		}
-		return Vector2d(0,0);
-	}
+
+
+class Tiles {
+
 };
-class Player : public Entity {
-public:
-
-	Vector2d pos;
-	Vector2d velo;
-
-	Vector2d size;
-	Texture tex;
-	
-	//These are inputs. They are checked every frame
-	bool running_left;
-	bool running_right;
-	bool jumping;
-
-	//these are state flags
-	bool on_ground;
-
-	Player() {
-		running_left = false;
-		running_right = false;
-		mask = 0;
-	}
-
-	virtual void Update(const World& world, float delta) {
-		Vector2d acc;
-		if(running_left) {
-			acc.x -= 10;
-		}
-		if(running_right) {
-			acc.x += 10;
-		}
-		if(on_ground && jumping) {
-			on_ground = false;
-			acc.y += 20;
-		}
-		acc.y += 2;
-
-		acc = acc * 3;
-
-
-		velo += acc * delta;
-		if(on_ground) {
-			velo.x *= 0.99;
-		}
-
-		pos += velo * delta;
-
-		Vector2d overlap = world.VsRect(pos, size, 1);
-		if(overlap.x > 0) {
-			if(velo.x > 0) {
-				pos.x += overlap.x;
-			}else if(velo.x < 0) {
-				pos.x -= overlap.x;
-			}
-			velo.x = 0;
-		}
-		if(overlap.y > 0) {
-			if(velo.y > 0) {
-				pos.y -= overlap.y;
-			}else if(velo.y < 0) {
-				pos.y += overlap.y;
-			}
-			velo.y = 0;
-		}
-	}
- 
-	virtual void Render(SDL_Renderer* renderer) {
-		SDL_Rect rect;
-		rect.x = pos.x - size.x / 2;
-		rect.y = pos.y - size.y / 2;
-		rect.w = size.x;
-		rect.h = size.y;
-		SDL_RenderCopy(renderer, tex.ptr, 0, &rect);
-	}
-};
-
 
 
 void LoadFromFile(ResourceManager& res, World& world, const char* fn) {
-	Texture tex = res.getTexture("test.bmp");
-	world.AddEntity(new Platform(Vector2d(125,225), Vector2d(120, 65), tex));
+	//Texture tex = res.GetTexture("test.bmp");
+	//world.AddEntity(new Platform(Vector2d(125,225), Vector2d(120, 65), tex));
 }
+
+
+
+
+
 class Game {
-	World world;
+
 	ResourceManager res_manager;
+	
 	SDL_Renderer* renderer;
 	SDL_Window* window;
 	bool running;
-	Player* player;
+	
+	Actor* p1;
+
+	SpriteScene scene;
+	PhysicsWorld physics;
+
+	IdAllocator allocator;
+	Tiles tiles;
 public:
+	Game() : allocator(MAX_ENTITES) {
+
+	}
 	bool Init() {
 		SDL_Init(SDL_INIT_EVERYTHING);
-		if(SDL_CreateWindowAndRenderer(640, 480, SDL_RENDERER_PRESENTVSYNC, &window, &renderer) != 0) {
+		window = SDL_CreateWindow("Hello World", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
+		if(!window) {
 			return false;
 		}
-		res_manager.Init(renderer);
-		LoadFromFile(res_manager, world, "");
-		player = new Player;
-		player->pos = Vector2d(100, 100);
-		player->size = Vector2d(40, 80);
-		player->tex = res_manager.getTexture("test.bmp");
-		world.AddEntity(player);
+		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | CUSTOM_PRESENT_VSYNC);
+		if(!renderer) {
+			return false;
+		}
+		SDL_SetRenderDrawColor(renderer, 255,255,255,255);
+		res_manager.Init(renderer, "texture/");
+
+		scene.Init(MAX_ENTITES);
+		physics.Init(MAX_ENTITES);
+		physics.SetConstantForce(Vector2d(0, 9.8));
+		
+		Sprite sprite; Actor actor; ARRAY_ID id;
+		sprite.texture = res_manager.GetTexture("grass_platform.png");
+
+		//------Add a platform
+		id = allocator.AllocID();
+		sprite.pos = Vector2d(250, 300);
+		sprite.size = Vector2d(500, 90);
+		sprite.source.x = 0;
+		sprite.source.y = 0;
+		sprite.source.w = 0;
+		sprite.source.h = 0;
+		scene.AddSprite(id, sprite);
+
+		actor.shape.pos = Vector2d(250, 300);
+		actor.shape.size = Vector2d(500, 90);
+		actor.inv_mass = 0;
+		actor.restitution = 0.1;
+		physics.AddActor(id, actor);
+
+
+		//------Add the player
+		id = allocator.AllocID();
+		sprite.texture = res_manager.GetTexture("character.png");
+		sprite.pos = Vector2d(150, 150);
+		sprite.size = Vector2d(46 * 2, 55 * 2);
+		//sprite.source.x = 0;
+		//sprite.source.y = 3 * 51;
+		//sprite.source.w = 46;
+		//sprite.source.h = 55;
+		scene.AddSprite(id, sprite);
+
+		actor.shape.pos = Vector2d(150, 150);
+		actor.shape.size = Vector2d(46 * 2, 55 * 2);
+		actor.velo = Vector2d(0, 0);
+		actor.inv_mass = 1 / 3.0;
+		actor.restitution = 0.1;
+
+		physics.AddActor(id, actor);
+		p1 = &physics.GetActor(id);
+
+		actor.shape.pos = Vector2d(100, 200);
+
+
 		return true;
 	}
 	void Run() {
 		running = true;
 		SDL_Event e;
 		int last_frame = SDL_GetTicks();
+		
+		//For FPS calc
+		int frame_count = 0;
+		int last_display = last_frame;
+		const int fps_update = 30;
+
 		while(running) {
+			frame_count++;
 
 			int now = SDL_GetTicks();
 			float delta = (now - last_frame) / 1000.0f;
 			last_frame = now;
-
 			while( SDL_PollEvent( &e ) != 0 )
 			{ 
 				if(e.type == SDL_QUIT) {
 					running = false;
-				}else if(e.type == SDL_KEYDOWN) {
-					if(e.key.keysym.sym == SDLK_LEFT) {
-						player->running_left = true;
-					}else if(e.key.keysym.sym == SDLK_RIGHT) {
-						player->running_right = true;
-					}
-				}else if(e.type == SDL_KEYUP) {
-					if(e.key.keysym.sym == SDLK_LEFT) {
-						player->running_left = false;
-					}else if(e.key.keysym.sym == SDLK_RIGHT) {
-						player->running_right = false;
-					}
 				}
+
 			}
-			world.Update(delta);
+			const Uint8* state = SDL_GetKeyboardState(0);
+			p1->velo += Vector2d(0, 9.8) * delta;
+			if(state[SDL_SCANCODE_LEFT]) {
+				p1->velo.x -= 35 * delta;
+			}
+			if(state[SDL_SCANCODE_RIGHT]) {
+				p1->velo.x += 35 * delta;
+			}
+
+			physics.UpdatePositions(delta);
+			physics.CollideAndRespond();
+
+			//get info from physics and feed to the scene
+			for(auto i = physics.GetMoves().begin(), end = physics.GetMoves().end();
+				i != end; ++i) {
+					scene.SetPosition(i->id, i->pos);
+			}
+			physics.GetMoves().clear();
+
+
 			SDL_RenderClear(renderer);
-			world.Render(renderer);
+			scene.Render(renderer);
+
+			if(frame_count % fps_update == 0) {
+				int diff = SDL_GetTicks() - last_display;
+				last_display = SDL_GetTicks();
+				float fps = diff * (60 * 60 / fps_update) / 1000.0;
+				//printf("%f\n", fps);
+			}
 			SDL_RenderPresent(renderer);
 		}
 	}
@@ -187,7 +176,7 @@ public:
 		SDL_Quit();
 	}
 };
-#define MAX_ENTITES 1024
+
 int main(int argc, char* argv[]) {
 	SparseArray<int> test;
 	IdAllocator allocator(MAX_ENTITES);

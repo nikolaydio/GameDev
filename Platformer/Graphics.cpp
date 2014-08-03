@@ -1,35 +1,5 @@
 #include "Graphics.h"
-
-
-Vector2d::Vector2d() : x(0), y(0) {}
-Vector2d::Vector2d(float X, float Y) : x(X), y(Y) {}
-Vector2d Vector2d::operator+(const Vector2d& sec) const {
-	return Vector2d(x + sec.x, y + sec.y);
-}
-Vector2d& Vector2d::operator+=(const Vector2d& sec) {
-	*this = *this + sec;
-	return *this;
-}
-Vector2d Vector2d::operator-(const Vector2d& sec) const {
-	return Vector2d(x - sec.x, y - sec.y);
-}
-Vector2d& Vector2d::operator-=(const Vector2d& sec) {
-	*this = *this - sec;
-	return *this;
-}
-Vector2d Vector2d::operator*(float delta) const {
-	return Vector2d(x * delta, y * delta);
-}
-
-
-
-
-
-
-
-
-
-
+#include <SDL_image.h>
 
 Texture& Texture::operator=(const Texture& sec) {
 	ptr = sec.ptr;
@@ -40,7 +10,7 @@ Texture& Texture::operator=(const Texture& sec) {
 
 Texture ResourceManager::loadTexture(const std::string& fn) const {
 	Texture tex;
-	SDL_Surface* img = SDL_LoadBMP((prefix + fn).c_str());
+	SDL_Surface* img = IMG_Load((prefix + fn).c_str());
 	if(img != 0) {
 
 		tex.ptr = SDL_CreateTextureFromSurface(ren, img);
@@ -56,10 +26,12 @@ Texture ResourceManager::loadTexture(const std::string& fn) const {
 	return tex;
 }
 ResourceManager::ResourceManager() : fails(0) {}
-void ResourceManager::Init(SDL_Renderer* renderer) {
+void ResourceManager::Init(SDL_Renderer* renderer, char* prefix) {
+	IMG_Init(IMG_INIT_PNG);
 	ren = renderer;
+	this->prefix = prefix;
 }
-Texture ResourceManager::getTexture(const std::string& fn) {
+Texture ResourceManager::GetTexture(const std::string& fn) {
 	auto i = textures.find(fn);
 	if(i != textures.end()) {
 		return (*i).second;
@@ -77,7 +49,7 @@ int ResourceManager::HasFailed() {
 	fails = 0;
 	return fail_count;
 }
-void ResourceManager::addTexture(const std::string& key, Texture tex) {
+void ResourceManager::AddTexture(const std::string& key, Texture tex) {
 	textures[key] = tex;
 }
 void ResourceManager::Cleanup() {
@@ -85,4 +57,40 @@ void ResourceManager::Cleanup() {
 		SDL_DestroyTexture(i->second.ptr);
 	}
 	textures.clear();
+}
+
+
+void SpriteScene::Init(int entity_count) {
+	sprites.SetCapacity(entity_count);
+}
+void SpriteScene::SetPosition(ARRAY_ID id, Vector2d pos) {
+	Sprite& spr = sprites.lookup(id);
+	spr.pos = pos;
+}
+void SpriteScene::AddSprite(ARRAY_ID id, Sprite& spr) {
+	sprites.AllocateID(id);
+	sprites.lookup(id) = spr;
+}
+Sprite& SpriteScene::GetSpirte(ARRAY_ID id) {
+	return sprites.lookup(id);
+}
+SparseArray<Sprite>& SpriteScene::GetSpriteList() {
+	return sprites;
+}
+void SpriteScene::Render(SDL_Renderer* ren) {
+	Sprite* sprite;
+	ARRAY_ID id;
+	SDL_Rect rect;
+	for(int i = 0; i < sprites.GetElementCount(); ++i) {
+		sprites.get_by_index(i, &id, &sprite);
+		rect.x = sprite->pos.x - sprite->size.x / 2;
+		rect.y = sprite->pos.y + sprite->size.y / 2;
+		rect.w = sprite->size.x;
+		rect.h = sprite->size.y;
+		if(sprite->source.x | sprite->source.y | sprite->source.w | sprite->source.h) {
+			SDL_RenderCopy(ren, sprite->texture.ptr, &sprite->source, &rect);
+		}else {
+			SDL_RenderCopy(ren, sprite->texture.ptr, 0, &rect);
+		}
+	}
 }

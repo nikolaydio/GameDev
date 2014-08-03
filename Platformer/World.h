@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "Graphics.h"
+#include "Math.h"
 
 class World;
 class Entity {

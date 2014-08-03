@@ -2,17 +2,9 @@
 #include <SDL.h>
 #include <string>
 #include <unordered_map>
+#include "SparseArray.h"
+#include "Math.h"
 
-struct Vector2d {
-	float x, y;
-	Vector2d();
-	Vector2d(float X, float Y);
-	Vector2d operator+(const Vector2d& sec) const;
-	Vector2d& operator+=(const Vector2d& sec);
-	Vector2d operator-(const Vector2d& sec) const;
-	Vector2d& operator-=(const Vector2d& sec);
-	Vector2d operator*(float delta) const;
-};
 
 
 class Texture {
@@ -23,6 +15,8 @@ public:
 	Texture() { ptr = 0; width = 0; height = 0; }
 	Texture& operator=(const Texture& sec);
 };
+
+
 class ResourceManager {
 	Texture loadTexture(const std::string& fn) const;
 
@@ -32,9 +26,30 @@ class ResourceManager {
 	std::string prefix;
 public:
 	ResourceManager();
-	void Init(SDL_Renderer* renderer);
-	Texture getTexture(const std::string& fn);
+	void Init(SDL_Renderer* renderer, char* prefix);
+	Texture GetTexture(const std::string& fn);
 	int HasFailed();
-	void addTexture(const std::string& key, Texture tex);
+	void AddTexture(const std::string& key, Texture tex);
 	void Cleanup();
+};
+
+
+class Sprite {
+public:
+	Vector2d pos;
+	Vector2d size;
+	SDL_Rect source;
+	Texture texture;
+};
+class SpriteScene {
+	SparseArray<Sprite> sprites;
+public:
+	void Init(int entity_count);
+
+	void SetPosition(ARRAY_ID id, Vector2d pos);
+	void AddSprite(ARRAY_ID id, Sprite& spr);
+	Sprite& GetSpirte(ARRAY_ID id);
+
+	SparseArray<Sprite>& GetSpriteList();
+	void Render(SDL_Renderer* ren);
 };
