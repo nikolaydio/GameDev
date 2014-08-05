@@ -303,6 +303,7 @@ public:
 					scene.SetPosition(i->id, i->pos);
 			}
 			physics.GetMoves().clear();
+
 			for(auto i = physics.GetCollisions().begin(), end = physics.GetCollisions().end();
 				i != end; ++i) {
 					if(i->first == player_id) {
