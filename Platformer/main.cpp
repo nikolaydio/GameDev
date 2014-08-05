@@ -306,9 +306,11 @@ public:
 			for(auto i = physics.GetCollisions().begin(), end = physics.GetCollisions().end();
 				i != end; ++i) {
 					if(i->first == player_id) {
-						running = player.Collided(i->normal, i->second);
+						if(!player.Collided(i->normal, i->second))
+							running = false;
 					}else if(i->second == player_id) {
-						running = player.Collided(-i->normal, i->first);
+						if(!player.Collided(-i->normal, i->first))
+							running = false;
 					}
 			}
 			physics.GetCollisions().clear();
