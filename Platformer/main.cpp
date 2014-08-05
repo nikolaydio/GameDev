@@ -14,6 +14,7 @@
 #endif
 
 #define MAX_ENTITES 1024
+#include <unordered_map>
 
 
 
@@ -36,49 +37,56 @@ class Character {
 	float anim_max;
 	float anim_speed;
 	float anim_start;
+
 public:
 	Actor* actor;
 	Sprite* sprite;
+	ARRAY_ID target;
 	Character() { state = STAYING; horizontal = 0;
 		anim_speed = 10; anim_max = 9; anim_progress = 0;
 		anim_start = 1;
 	}
 	void Move(float move) {
-		horizontal += move;
+		horizontal += move * 500;
 	}
 	void Jump() {
 	if(state == RUNNING || state == STAYING) {
-			actor->velo.y -= 600;
+			actor->velo.y -= 700;
 			state = JUMPING;
 		}
 	}
-	void Collided(Vector2d normal) {
-		if(normal.x == 0 || normal.y == 1) {
-			if(state == JUMPING) {
-				state = STAYING;
+	bool Collided(Vector2d normal, ARRAY_ID with) {
+		if(with == target) {
+			return false;
+		}else{
+			if(normal.x == 0 || normal.y == 1) {
+				if(state == JUMPING) {
+					state = STAYING;
+				}
 			}
 		}
+		return true;
 	}
 	void Update(float delta) {
 		actor->velo.x += horizontal * delta;
 		if(state == RUNNING) {
 			if(horizontal == 0) {
 				if(actor->velo.x > 0) {
-					actor->velo.x -= std::min(actor->velo.x, 175 * delta);
+					actor->velo.x -= std::min(actor->velo.x, 500 * delta);
 				}else{
-					actor->velo.x += std::min(-actor->velo.x, 175 * delta);
+					actor->velo.x += std::min(-actor->velo.x, 500 * delta);
 				}
 			}
 			if(actor->velo.x > 0) {
-				actor->velo.x = std::min<float>(actor->velo.x, 400);
+				actor->velo.x = std::min<float>(actor->velo.x, 500);
 				sprite->size.x = abs(sprite->size.x);
 			}else{
-				actor->velo.x = -std::min<float>(-actor->velo.x, 400);
+				actor->velo.x = -std::min<float>(-actor->velo.x, 500);
 				sprite->size.x = -abs(sprite->size.x);
 			}
 
 			anim_speed = abs(actor->velo.x) / 32;
-			if(abs(actor->velo.x) < 1) {
+			if(abs(actor->velo.x) < 0.00001) {
 				state = STAYING;
 				sprite->source.x = 0;
 				anim_progress = 0;
@@ -91,8 +99,9 @@ public:
 				}
 			}
 		}else if(state == STAYING) {
-			if(abs(actor->velo.x) > 1) {
+			if(abs(actor->velo.x) > 0.00001) {
 				state = RUNNING;
+				anim_progress = anim_start;
 			}
 		}
 
@@ -124,6 +133,14 @@ class Game {
 
 	IdAllocator allocator;
 	Tiles tiles;
+
+	enum ELEMENT_TYPE {
+		ET_PLATFORM,
+		ET_CHARACTER,
+		ET_COIN,
+		ET_FRAGMENT
+	};
+	std::unordered_map<ARRAY_ID, ELEMENT_TYPE> entities;
 public:
 	Game() : allocator(MAX_ENTITES) {
 
@@ -164,6 +181,7 @@ public:
 			actor.inv_mass = 0;
 			actor.restitution = 0.1;
 			physics.AddActor(id, actor);
+			entities[id] = ET_PLATFORM;
 		}
 
 
@@ -185,6 +203,7 @@ public:
 		actor.restitution = 0.1;
 
 		physics.AddActor(id, actor);
+		entities[id] = ET_CHARACTER;
 		p1 = &physics.GetActor(id);
 		player.actor = p1;
 		player_id = id;
@@ -192,6 +211,47 @@ public:
 
 		actor.shape.pos = Vector2d(100, 200);
 
+
+		//------Add a coin
+		id = allocator.AllocID();
+		sprite.texture = res_manager.GetTexture("coin.png");
+		sprite.pos = Vector2d(250 + 500 * 9, 300 - 160 * 10);
+		sprite.size = Vector2d(64, 64);
+		sprite.source.x = 0;
+		sprite.source.y = 0;
+		sprite.source.w = 0;
+		sprite.source.h = 0;
+		scene.AddSprite(id, sprite);
+
+		actor.shape.pos = Vector2d(250 + 500 * 9, 300 - 160 * 10);
+		actor.shape.size = Vector2d(64, 64);
+		actor.velo = Vector2d(0, 0);
+		actor.inv_mass = 0;
+		actor.restitution = 0.1;
+
+		physics.AddActor(id, actor);
+		entities[id] = ET_COIN;
+		player.target = id;
+
+		//----Add a fragment
+		id = allocator.AllocID();
+		sprite.texture = res_manager.GetTexture("crate.png");
+		sprite.pos = Vector2d(750 , 100 );
+		sprite.size = Vector2d(128, 128);
+		sprite.source.x = 0;
+		sprite.source.y = 0;
+		sprite.source.w = 0;
+		sprite.source.h = 0;
+		scene.AddSprite(id, sprite);
+
+		actor.shape.pos = Vector2d(750 , 100 );
+		actor.shape.size = Vector2d(128, 128);
+		actor.velo = Vector2d(0, 0);
+		actor.inv_mass = 1 / 5.0;
+		actor.restitution = 0.1;
+
+		physics.AddActor(id, actor);
+		entities[id] = ET_FRAGMENT;
 
 		return true;
 	}
@@ -221,10 +281,10 @@ public:
 			const Uint8* state = SDL_GetKeyboardState(0);
 			p1->velo += Vector2d(0, 9.8 * 100) * delta;
 			if(state[SDL_SCANCODE_LEFT]) {
-				player.Move(-400);
+				player.Move(-1);
 			}
 			if(state[SDL_SCANCODE_RIGHT]) {
-				player.Move(400);
+				player.Move(1);
 			}
 			if(state[SDL_SCANCODE_UP]) {
 				player.Jump();
@@ -246,9 +306,9 @@ public:
 			for(auto i = physics.GetCollisions().begin(), end = physics.GetCollisions().end();
 				i != end; ++i) {
 					if(i->first == player_id) {
-						player.Collided(i->normal);
+						running = player.Collided(i->normal, i->second);
 					}else if(i->second == player_id) {
-						player.Collided(-i->normal);
+						running = player.Collided(-i->normal, i->first);
 					}
 			}
 			physics.GetCollisions().clear();

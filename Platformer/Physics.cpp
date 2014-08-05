@@ -71,6 +71,9 @@ void PhysicsWorld::UpdatePositions(float delta) {
 	for(int i = 0; i < actors.GetElementCount(); ++i) {
 		actors.get_by_index(i, &id, &actor);
 
+		if(actor->inv_mass != 0) {
+			actor->velo += constant_force * delta;
+		}
 		
 		actor->shape.pos += actor->velo * delta;
 		if(actor->velo.x != 0 || actor->velo.y != 0) {
